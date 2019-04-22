@@ -194,11 +194,11 @@ public:
 
 	friend const big_integer& operator++ (big_integer &a);
 
-	friend const big_integer& operator++ (big_integer &a, int);
+	friend const big_integer operator++ (big_integer &a, int);
 
 	friend const big_integer& operator-- (big_integer &a);
 
-	friend const big_integer& operator-- (big_integer &a, int);
+	friend const big_integer operator-- (big_integer &a, int);
 };
 
 const bool operator== (big_integer const &a, big_integer const &b) {
@@ -410,7 +410,7 @@ const big_integer& operator++ (big_integer &a) {
 	return a;
 }
 
-const big_integer& operator++ (big_integer &a, int) {
+const big_integer operator++ (big_integer &a, int) {
 	big_integer res = a;
 	++a;
 	return res;
@@ -443,7 +443,7 @@ const big_integer& operator-- (big_integer &a) {
 	return a;
 }
 
-const big_integer& operator-- (big_integer &a, int) {
+const big_integer operator-- (big_integer &a, int) {
 	big_integer res = a;
 	--a;
 	return res;
