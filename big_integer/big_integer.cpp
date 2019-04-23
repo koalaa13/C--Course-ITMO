@@ -261,6 +261,10 @@ public:
 	friend const big_integer operator<< (big_integer const &a, u_int const &shift);
 
 	friend const big_integer operator>> (big_integer const &a, u_int const &shift);
+
+	friend big_integer& operator>>= (big_integer &a, u_int const &shift);
+
+	friend big_integer& operator<<= (big_integer &a, u_int const &shift);
 };
 
 const bool operator== (big_integer const &a, big_integer const &b) {
@@ -420,7 +424,7 @@ ostream& operator<< (ostream& os, big_integer const &number) {
 const big_integer operator* (big_integer const &a, big_integer const &b) {
 	big_integer res;
 	for (ptrdiff_t i = b.data.size() - 1; i >= 0; --i) {
-		res =  res << 32;
+		res <<= 32;
 		res += a * b.data[i];
 	}
 	res.sign = a.sign ^ b.sign;
@@ -583,17 +587,16 @@ const big_integer operator<< (big_integer const &a, u_int const &shift) {
 	return big_integer(res, a.sign);
 }
 
-//it doesn't work :( (for now)
 const big_integer operator>> (big_integer const &a, u_int const &shift) {
 	size_t big = shift / BIT, small = shift % BIT, shift1 = BIT - small;
 	if (big >= a.data.size()) {
-		return big_integer(0);
+		return 0;
 	}
 	vector<u_int> res(a.data.size() - big);
 	for (size_t i = 0; i < res.size(); ++i) {
-		res[i] = (a.data[i + big] >> small);
+		res[i] = a.data[i + big] >> small;
 		if (i + 1 < res.size()) {
-			res[i] |= (a.data[i + big + 1] << shift1) >> shift1;
+			res[i] |= (a.data[i + big + 1] >> shift1) << shift1;
 		}
 	}
 	while (res.size() > 1 && res.back() == 0) {
@@ -606,22 +609,28 @@ const big_integer operator>> (big_integer const &a, u_int const &shift) {
 	return big_integer(res, s);
 }
 
+big_integer& operator>>= (big_integer &a, u_int const &shift) {
+	return a = a >> shift;
+}
+
+big_integer& operator<<= (big_integer &a, u_int const &shift) {
+	return a = a << shift;
+}
+
 //----------------------------------------------------------------------------------------
 char rnd() {
 	return (char)((rand() % 10) + '0');
 }
 
 int main() {
-	/*string s1 = "", s2 = "";	
+	string s1 = "", s2 = "";	
 	for (size_t i = 0; i < 100000; ++i) {
 		s1 += rnd();
 		s2 += rnd();
 	}
 	big_integer a(s1), b(s2);
-	a * b;
-	cerr << clock() * 1. / CLOCKS_PER_SEC << "\n";*/
-	big_integer a("123798163812637183");
-	cout << (a >> 1);
-
+	a & b;
+	cerr << clock() * 1. / CLOCKS_PER_SEC << "\n";
+	
 	return 0;
 }
