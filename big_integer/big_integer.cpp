@@ -11,7 +11,7 @@ typedef unsigned int u_int;
 typedef unsigned long long u_ll;
 
 u_int const BIT = 32;
-u_ll const NUMBER_SYSTEM = (1ll << BIT);
+u_ll const RADIX = (1ll << BIT);
 
 class big_integer {
 	vector<u_int> data;
@@ -31,7 +31,7 @@ class big_integer {
 				res[i] = ~res[i];
 			}
 			for (size_t i = 0; i < res.size(); ++i) {
-				if (res[i] == NUMBER_SYSTEM - 1) {
+				if (res[i] == RADIX - 1) {
 					res[i] = 0;
 				} else {
 					res[i]++;
@@ -70,7 +70,7 @@ class big_integer {
 	}
 
 	u_ll make_long_from_int(u_int const &a, u_int const &b) const {
-		return (u_ll)a * NUMBER_SYSTEM + (u_ll)b;
+		return (u_ll)a * RADIX + (u_ll)b;
 	}
 
 	bool operator== (u_int const &b) const {
@@ -86,11 +86,11 @@ class big_integer {
 		big_integer res = *this;
 		for (size_t i = 0; i < res.data.size(); ++i) {
 			u_ll cur = (u_ll)res.data[i] * (u_ll)b + prev;
-			res.data[i] = (u_int)(cur % NUMBER_SYSTEM);
-			prev = cur / NUMBER_SYSTEM;
+			res.data[i] = (u_int)(cur % RADIX);
+			prev = cur / RADIX;
 		}
 		if (prev) {
-			res.data.push_back(prev % NUMBER_SYSTEM);
+			res.data.push_back(prev % RADIX);
 		}
 		res.delete_zeroes();
 		return res;
@@ -104,14 +104,14 @@ class big_integer {
 		u_ll prev = (u_ll)b;
 		for (size_t i = 0; i < data.size(); ++i) {
 			u_ll cur = data[i] + prev;
-			data[i] = (u_int)(cur % NUMBER_SYSTEM);
-			prev = cur / NUMBER_SYSTEM;
+			data[i] = (u_int)(cur % RADIX);
+			prev = cur / RADIX;
 			if (prev == 0) {
 				break;
 			}
 		}
 		if (prev) {
-			data.push_back(prev % NUMBER_SYSTEM);
+			data.push_back(prev % RADIX);
 		}
 		delete_zeroes();
 	}
@@ -265,6 +265,14 @@ public:
 	friend big_integer& operator>>= (big_integer &a, u_int const &shift);
 
 	friend big_integer& operator<<= (big_integer &a, u_int const &shift);
+
+	friend const big_integer operator/ (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator% (big_integer const &a, big_integer const  &b);
+
+	friend big_integer& operator/= (big_integer &a, big_integer const &b);
+
+	friend big_integer& operator%= (big_integer &a, big_integer const &b);
 };
 
 const bool operator== (big_integer const &a, big_integer const &b) {
@@ -343,8 +351,8 @@ const big_integer operator+ (big_integer const &a, big_integer const &b) {
 			if (i < b_size) {
 				cur += (u_ll)b.data[i];
 			}
-			res.data[i] = (u_int)(cur % NUMBER_SYSTEM);
-			prev = (u_int)(cur / NUMBER_SYSTEM);
+			res.data[i] = (u_int)(cur % RADIX);
+			prev = (u_int)(cur / RADIX);
 		}
 		if (prev) {
 			res.data.push_back((u_int)prev);
@@ -384,7 +392,7 @@ const big_integer operator- (big_integer const &a, big_integer const &b) {
 			first -= second + borrowed;
 			if (first < 0) {
 				borrowed = true;
-				first += NUMBER_SYSTEM;
+				first += RADIX;
 			} else {
 				borrowed = false;
 			}
@@ -455,7 +463,7 @@ const big_integer& operator++ (big_integer &a) {
 		bool was = true;
 		for (size_t i = 0; i < a.data.size(); ++i) {
 			u_ll cur = (u_ll)a.data[i] + (u_ll)was;
-			if (cur == NUMBER_SYSTEM) {
+			if (cur == RADIX) {
 				a.data[i] = 0;
 			} else {
 				a.data[i]++;
@@ -496,7 +504,7 @@ const big_integer& operator-- (big_integer &a) {
 			}
 			a.data[i--]--;
 			for (; i >= 0; --i) {
-				a.data[i] = (u_int)(NUMBER_SYSTEM - 1);
+				a.data[i] = (u_int)(RADIX - 1);
 			}
 		}
 	}
@@ -554,7 +562,7 @@ big_integer& operator&= (big_integer &a, big_integer const &b) {
 }
 
 big_integer& operator|= (big_integer &a, big_integer const &b) {
-	return a = a | b;
+return a = a | b;
 }
 
 big_integer& operator^= (big_integer &a, big_integer const &b) {
@@ -587,7 +595,7 @@ const big_integer operator<< (big_integer const &a, u_int const &shift) {
 	return big_integer(res, a.sign);
 }
 
-const big_integer operator>> (big_integer const &a, u_int const &shift) {
+const big_integer operator >> (big_integer const &a, u_int const &shift) {
 	size_t big = shift / BIT, small = shift % BIT, shift1 = BIT - small;
 	if (big >= a.data.size()) {
 		return 0;
@@ -617,20 +625,67 @@ big_integer& operator<<= (big_integer &a, u_int const &shift) {
 	return a = a << shift;
 }
 
+const big_integer operator/ (big_integer const &a, big_integer const &b) {
+	big_integer a_copy = a, b_copy = b;
+	while (b_copy.data.back() < (RADIX >> 1)) {
+		b_copy <<= 1;
+		a_copy <<= 1;
+	}
+	big_integer res;
+	size_t n = b_copy.data.size(), m = a_copy.data.size() - n;
+	res.data.reserve(m + 1);
+	big_integer shift = b_copy << (BIT * m);
+	if (a_copy < shift) {
+		res.data.back() = 0;
+	} else {
+		res.data.back() = 1;
+		a_copy -= shift;
+	}
+	for (ptrdiff_t j = m - 1; j >= 0; --j) {
+		u_int qj = min(RADIX - 1, (((u_ll)a_copy.data[n + j] * RADIX + a_copy.data[n + j - 1]) / (u_ll)b_copy.data.back()));
+		shift >>= BIT;
+		a_copy -= shift * qj;
+		while (a_copy.sign) {
+			qj--;
+			a_copy += shift;
+		}
+		res.data[j] = qj;
+	}
+	res.sign = a.sign ^ b.sign;
+	res.delete_zeroes();
+	if (res == 0) {
+		res.sign = false;
+	}
+	return res;
+}
+const big_integer operator% (big_integer const &a, big_integer const &b) {
+	return a - b * (a / b);
+}
+
+big_integer& operator/= (big_integer &a, big_integer const &b) {
+	return a = a / b;
+}
+
+big_integer& operator%= (big_integer &a, big_integer const &b) {
+	return a = a % b;
+}
+
 //----------------------------------------------------------------------------------------
 char rnd() {
 	return (char)((rand() % 10) + '0');
 }
 
 int main() {
-	string s1 = "", s2 = "";	
+	/*string s1 = "", s2 = "";	
 	for (size_t i = 0; i < 100000; ++i) {
 		s1 += rnd();
 		s2 += rnd();
 	}
 	big_integer a(s1), b(s2);
 	a & b;
-	cerr << clock() * 1. / CLOCKS_PER_SEC << "\n";
-	
+	cerr << clock() * 1. / CLOCKS_PER_SEC << "\n";*/
+	big_integer a("10"), b("2");
+	cout << a % b;
+
 	return 0;
 }
