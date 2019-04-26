@@ -7,9 +7,6 @@ typedef unsigned int u_int;
 typedef long long ll;
 typedef unsigned long long u_ll;
 
-u_int const BIT = 32;
-u_ll const RADIX = (1 << BIT);
-
 class big_integer {
 	vector<u_int> data;
 	bool sign;
@@ -19,12 +16,12 @@ class big_integer {
 	big_integer(vector<u_int> const &d, bool const &s);
 	big_integer(vector<u_int> const &arr);
 	u_ll make_long_from_int(u_int const &a, u_int const &b) const;
-	bool eq_short (u_int const &b) const; //
-	bool not_eq_short (u_int const &b) const; //
-	big_integer mul_long_short (u_int const &b) const; //
-	void mul_eq_long_short (u_int const &b); //
-	void add_eq_long_short (u_int const &b); //
-	u_int divide_eq_long_short (u_int const &b); //
+	bool eq_short (u_int const &b) const; 
+	bool not_eq_short (u_int const &b) const; 
+	big_integer mul_long_short (u_int const &b) const; 
+	void mul_eq_long_short (u_int const &b); 
+	void add_eq_long_short (u_int const &b); 
+	u_int divide_eq_long_short (u_int const &b); 
 	void swap(big_integer &other);
 
 public:
@@ -32,7 +29,8 @@ public:
 	big_integer(int const &n);
 	big_integer(big_integer const &other);
 	explicit big_integer(string const &s);
-	string to_string() const;
+	friend string to_string(big_integer const &a);
+	
 	big_integer& operator= (big_integer const &other);
 
 	friend const bool operator== (big_integer const &a, big_integer const &b);

@@ -5,6 +5,9 @@
 
 using namespace std;
 
+u_int const BIT = 32;
+u_ll const RADIX = (1 << BIT);
+
 void big_integer::delete_zeroes() {
 	while (data.size() > 1 && data.back() == 0) {
 		data.pop_back();
@@ -157,9 +160,9 @@ big_integer::big_integer(string const &s) {
 	}
 }
 
-string big_integer::to_string() const {
+string to_string(big_integer const &a) {
 	string res = "";
-	big_integer copy = *this;
+	big_integer copy = a;
 	while (copy.not_eq_short(0)) {
 		u_int mod = copy.divide_eq_long_short(10);
 		res += (char)(mod + '0');
@@ -167,7 +170,7 @@ string big_integer::to_string() const {
 	if (res.empty()) {
 		res = "0";
 	}
-	if (sign) {
+	if (a.sign) {
 		res += '-';
 	}
 	reverse(res.begin(), res.end());
@@ -333,7 +336,7 @@ const big_integer operator+ (big_integer const &a) {
 }
 
 ostream& operator<< (ostream& os, big_integer const &number) {
-	os << number.to_string();
+	os << to_string(number);
 	return os;
 }
 
