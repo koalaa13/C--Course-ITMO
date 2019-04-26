@@ -11,6 +11,13 @@ void big_integer::delete_zeroes() {
 	}
 }
 
+void big_integer::swap(big_integer &other) {
+	bool buff = sign;
+	sign = other.sign;
+	other.sign = buff;
+	data.swap(other.data);
+}
+
 vector<u_int> big_integer::make_two_complement() const {
 	vector<u_int> res = data;
 	res.push_back(0);
@@ -61,15 +68,15 @@ u_ll big_integer::make_long_from_int(u_int const &a, u_int const &b) const {
 	return (u_ll)a * RADIX + (u_ll)b;
 }
 
-bool big_integer::operator== (u_int const &b) const {
+bool big_integer::eq_short (u_int const &b) const {
 	return data.size() == 1 && data[0] == b;
 }
 
-bool big_integer::operator!= (u_int const &b) const {
-	return !(*this == b);
+bool big_integer::not_eq_short (u_int const &b) const {
+	return !(data.size() == 1 && data[0] == b);
 }
 
-big_integer big_integer::operator* (u_int const &b) const {
+big_integer big_integer::mul_long_short (u_int const &b) const {
 	u_ll prev = 0;
 	big_integer res = *this;
 	for (size_t i = 0; i < res.data.size(); ++i) {
@@ -84,11 +91,11 @@ big_integer big_integer::operator* (u_int const &b) const {
 	return res;
 }
 
-void big_integer::operator*= (u_int const &b) {
-	*this = *this * b;
+void big_integer::mul_eq_long_short (u_int const &b) {
+	*this = mul_long_short(b);
 }
 
-void big_integer::operator+= (u_int const &b) {
+void big_integer::add_eq_long_short (u_int const &b) {
 	u_ll prev = (u_ll)b;
 	for (size_t i = 0; i < data.size(); ++i) {
 		u_ll cur = data[i] + prev;
@@ -104,7 +111,7 @@ void big_integer::operator+= (u_int const &b) {
 	delete_zeroes();
 }
 
-u_int big_integer::operator/= (u_int const &b) {
+u_int big_integer::divide_eq_long_short (u_int const &b) {
 	u_int prev = 0;
 	for (ptrdiff_t i = data.size() - 1; i >= 0; --i) {
 		u_ll cur = make_long_from_int(prev, data[i]);
@@ -143,8 +150,8 @@ big_integer::big_integer(string const &s) {
 		}
 		sign = s[0] == '-';
 		for (size_t i = sign; i < s.length(); ++i) {
-			*this *= 10;
-			*this += (u_int)(s[i] - '0');
+			mul_eq_long_short(10);
+			add_eq_long_short((u_int)(s[i] - '0'));
 		}
 		delete_zeroes();
 	}
@@ -153,8 +160,8 @@ big_integer::big_integer(string const &s) {
 string big_integer::to_string() const {
 	string res = "";
 	big_integer copy = *this;
-	while (copy != 0) {
-		u_int mod = copy /= 10;
+	while (copy.not_eq_short(0)) {
+		u_int mod = copy.divide_eq_long_short(10);
 		res += (char)(mod + '0');
 	}
 	if (res.empty()) {
@@ -259,7 +266,7 @@ const big_integer operator+ (big_integer const &a, big_integer const &b) {
 			res.data.push_back((u_int)prev);
 		}
 	}
-	if (res == 0) {
+	if (res.eq_short(0)) {
 		res.sign = false;
 	}
 	res.delete_zeroes();
@@ -307,7 +314,7 @@ const big_integer operator- (big_integer const &a, big_integer const &b) {
 			res = a + -b;
 		}
 	}
-	if (res == 0) {
+	if (res.eq_short(0)) {
 		res.sign = false;
 	}
 	res.delete_zeroes();
@@ -333,11 +340,11 @@ ostream& operator<< (ostream& os, big_integer const &number) {
 const big_integer operator* (big_integer const &a, big_integer const &b) {
 	big_integer res;
 	for (ptrdiff_t i = b.data.size() - 1; i >= 0; --i) {
-		res <<= 32;
+		res <<= BIT;
 		res += a * b.data[i];
 	}
 	res.sign = a.sign ^ b.sign;
-	if (res == 0) {
+	if (res.eq_short(0)) {
 		res.sign = false;
 	}
 	return res;
@@ -376,7 +383,7 @@ const big_integer& operator++ (big_integer &a) {
 			a.data.push_back(1);
 		}
 	}
-	if (a == 0) {
+	if (a.eq_short(0)) {
 		a.sign = false;
 	}
 	a.delete_zeroes();
@@ -395,7 +402,7 @@ const big_integer& operator-- (big_integer &a) {
 		++a;
 		a.sign ^= true;
 	} else {
-		if (a == 0) {
+		if (a.eq_short(0)) {
 			a.sign = true;
 			a.data[0] = 1;
 		} else {
@@ -409,7 +416,7 @@ const big_integer& operator-- (big_integer &a) {
 			}
 		}
 	}
-	if (a == 0) {
+	if (a.eq_short(0)) {
 		a.sign = false;
 	}
 	a.delete_zeroes();
@@ -545,7 +552,7 @@ const big_integer operator/ (big_integer const &a, big_integer const &b) {
 	for (ptrdiff_t j = m - 1; j >= 0; --j) {
 		u_int qj = min(RADIX - 1, (((u_ll)a_copy.data[n + j] * RADIX + a_copy.data[n + j - 1]) / (u_ll)b_copy.data.back()));
 		shift >>= BIT;
-		a_copy -= shift * qj;
+		a_copy -= shift.mul_long_short(qj);
 		while (a_copy.sign) {
 			qj--;
 			a_copy += shift;
@@ -554,7 +561,7 @@ const big_integer operator/ (big_integer const &a, big_integer const &b) {
 	}
 	res.sign = a.sign ^ b.sign;
 	res.delete_zeroes();
-	if (res == 0) {
+	if (res.eq_short(0)) {
 		res.sign = false;
 	}
 	return res;

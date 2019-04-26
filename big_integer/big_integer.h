@@ -19,12 +19,12 @@ class big_integer {
 	big_integer(vector<u_int> const &d, bool const &s);
 	big_integer(vector<u_int> const &arr);
 	u_ll make_long_from_int(u_int const &a, u_int const &b) const;
-	bool operator== (u_int const &b) const;
-	bool operator!= (u_int const &b) const;
-	big_integer operator* (u_int const &b) const;
-	void operator*= (u_int const &b);
-	void operator+= (u_int const &b);
-	u_int operator/= (u_int const &b);
+	bool eq_short (u_int const &b) const; //
+	bool not_eq_short (u_int const &b) const; //
+	big_integer mul_long_short (u_int const &b) const; //
+	void mul_eq_long_short (u_int const &b); //
+	void add_eq_long_short (u_int const &b); //
+	u_int divide_eq_long_short (u_int const &b); //
 	void swap(big_integer &other);
 
 public:
