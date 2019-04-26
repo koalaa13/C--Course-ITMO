@@ -1,180 +1,279 @@
-#include "big_integer.h"
-#include <algorithm>
-#include <string>
 #include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <ctime>
 
 using namespace std;
 
-void big_integer::delete_zeroes() {
-	while (data.size() > 1 && data.back() == 0) {
-		data.pop_back();
-	}
-}
+typedef long long ll;
+typedef unsigned int u_int;
+typedef unsigned long long u_ll;
 
-vector<u_int> big_integer::make_two_complement() const {
-	vector<u_int> res = data;
-	res.push_back(0);
-	if (sign) {
-		for (size_t i = 0; i < res.size(); ++i) {
-			res[i] = ~res[i];
+u_int const BIT = 32;
+u_ll const RADIX = (1ll << BIT);
+
+class big_integer {
+	vector<u_int> data;
+	bool sign;
+
+	void delete_zeroes() {
+		while (data.size() > 1 && data.back() == 0) {
+			data.pop_back();
 		}
-		for (size_t i = 0; i < res.size(); ++i) {
-			if (res[i] == RADIX - 1) {
-				res[i] = 0;
-			} else {
-				res[i]++;
+	}
+
+	vector<u_int> make_two_complement() const {
+		vector<u_int> res = data;
+		res.push_back(0);
+		if (sign) {
+			for (size_t i = 0; i < res.size(); ++i) {
+				res[i] = ~res[i];
+			}
+			for (size_t i = 0; i < res.size(); ++i) {
+				if (res[i] == RADIX - 1) {
+					res[i] = 0;
+				} else {
+					res[i]++;
+					break;
+				}
+			}
+		}
+		return res;
+	}
+
+	big_integer(vector<u_int> const &d, bool const &s) {
+		data = d;
+		sign = s;
+		delete_zeroes();
+	}
+
+	big_integer(vector<u_int> const &arr) {
+		vector<u_int> copy = arr;
+		if (copy.back() == 0) {
+			copy.pop_back();
+			sign = false;
+		} else {
+			copy.pop_back();
+			size_t i = 0;
+			while (i < copy.size() && copy[i] == 0) {
+				copy[i++]--;
+			}
+			copy[i]--;
+			for (size_t i = 0; i < copy.size(); ++i) {
+				copy[i] = ~copy[i];
+			}
+			sign = true;
+		}
+		data = copy;
+		delete_zeroes();
+	}
+
+	u_ll make_long_from_int(u_int const &a, u_int const &b) const {
+		return (u_ll)a * RADIX + (u_ll)b;
+	}
+
+	bool operator== (u_int const &b) const {
+		return data.size() == 1 && data[0] == b;
+	}
+
+	bool operator!= (u_int const &b) const {
+		return !(*this == b);
+	}
+
+	big_integer operator* (u_int const &b) const {
+		u_ll prev = 0;
+		big_integer res = *this;
+		for (size_t i = 0; i < res.data.size(); ++i) {
+			u_ll cur = (u_ll)res.data[i] * (u_ll)b + prev;
+			res.data[i] = (u_int)(cur % RADIX);
+			prev = cur / RADIX;
+		}
+		if (prev) {
+			res.data.push_back(prev % RADIX);
+		}
+		res.delete_zeroes();
+		return res;
+	}
+
+	void operator*= (u_int const &b) {
+		*this = *this * b;
+	}
+
+	void operator+= (u_int const &b) {
+		u_ll prev = (u_ll)b;
+		for (size_t i = 0; i < data.size(); ++i) {
+			u_ll cur = data[i] + prev;
+			data[i] = (u_int)(cur % RADIX);
+			prev = cur / RADIX;
+			if (prev == 0) {
 				break;
 			}
 		}
-	}
-	return res;
-}
-
-big_integer::big_integer(vector<u_int> const &d, bool const &s) {
-	data = d;
-	sign = s;
-	delete_zeroes();
-}
-
-big_integer::big_integer(vector<u_int> const &arr) {
-	vector<u_int> copy = arr;
-	if (copy.back() == 0) {
-		copy.pop_back();
-		sign = false;
-	} else {
-		copy.pop_back();
-		size_t i = 0;
-		while (i < copy.size() && copy[i] == 0) {
-			copy[i++]--;
-		}
-		copy[i]--;
-		for (size_t i = 0; i < copy.size(); ++i) {
-			copy[i] = ~copy[i];
-		}
-		sign = true;
-	}
-	data = copy;
-	delete_zeroes();
-}
-
-u_ll big_integer::make_long_from_int(u_int const &a, u_int const &b) const {
-	return (u_ll)a * RADIX + (u_ll)b;
-}
-
-bool big_integer::operator== (u_int const &b) const {
-	return data.size() == 1 && data[0] == b;
-}
-
-bool big_integer::operator!= (u_int const &b) const {
-	return !(*this == b);
-}
-
-big_integer big_integer::operator* (u_int const &b) const {
-	u_ll prev = 0;
-	big_integer res = *this;
-	for (size_t i = 0; i < res.data.size(); ++i) {
-		u_ll cur = (u_ll)res.data[i] * (u_ll)b + prev;
-		res.data[i] = (u_int)(cur % RADIX);
-		prev = cur / RADIX;
-	}
-	if (prev) {
-		res.data.push_back(prev % RADIX);
-	}
-	res.delete_zeroes();
-	return res;
-}
-
-void big_integer::operator*= (u_int const &b) {
-	*this = *this * b;
-}
-
-void big_integer::operator+= (u_int const &b) {
-	u_ll prev = (u_ll)b;
-	for (size_t i = 0; i < data.size(); ++i) {
-		u_ll cur = data[i] + prev;
-		data[i] = (u_int)(cur % RADIX);
-		prev = cur / RADIX;
-		if (prev == 0) {
-			break;
-		}
-	}
-	if (prev) {
-		data.push_back(prev % RADIX);
-	}
-	delete_zeroes();
-}
-
-u_int big_integer::operator/= (u_int const &b) {
-	u_int prev = 0;
-	for (ptrdiff_t i = data.size() - 1; i >= 0; --i) {
-		u_ll cur = make_long_from_int(prev, data[i]);
-		prev = (u_int)(cur % (u_ll)b);
-		data[i] = (u_int)(cur / (u_ll)b);
-	}
-	delete_zeroes();
-	return prev;
-}
-
-big_integer::big_integer() {
-	sign = false;
-	data.resize(1, 0);
-}
-
-big_integer::big_integer(int const &n) {
-	data.resize(1);
-	sign = n < 0;
-	data[0] = abs(n);
-}
-
-big_integer::big_integer(big_integer const &other) {
-	data = other.data;
-	sign = other.sign;
-}
-
-big_integer::big_integer(string const &s) {
-	if (s.empty()) {
-		data.resize(1, 0);
-		sign = false;
-	} else {
-		data.resize(1, 0);
-		if (s == "-0") {
-			sign = false;
-			return;
-		}
-		sign = s[0] == '-';
-		for (size_t i = sign; i < s.length(); ++i) {
-			*this *= 10;
-			*this += (u_int)(s[i] - '0');
+		if (prev) {
+			data.push_back(prev % RADIX);
 		}
 		delete_zeroes();
 	}
-}
 
-string big_integer::to_string() const {
-	string res = "";
-	big_integer copy = *this;
-	while (copy != 0) {
-		u_int mod = copy /= 10;
-		res += (char)(mod + '0');
-	}
-	if (res.empty()) {
-		res = "0";
-	}
-	if (sign) {
-		res += '-';
-	}
-	reverse(res.begin(), res.end());
-	return res;
-}
+	void operator-= (u_int const &b) {
+		if (sign) {
+			
+		} else {
 
-big_integer& big_integer::operator= (big_integer const &other) {
-	sign = other.sign;
-	data.resize(other.data.size());
-	for (size_t i = 0; i < data.size(); ++i) {
-		data[i] = other.data[i];
+		}
 	}
-	return *this;
-}
+
+	u_int operator/= (u_int const &b) {
+		u_int prev = 0;
+		for (ptrdiff_t i = data.size() - 1; i >= 0; --i) {
+			u_ll cur = make_long_from_int(prev, data[i]);
+			prev = (u_int)(cur % (u_ll)b);
+			data[i] = (u_int)(cur / (u_ll)b);
+		}
+		delete_zeroes();
+		return prev;
+	}
+
+public:
+	big_integer() {
+		sign = false;
+		data.resize(1, 0);
+	}
+
+	big_integer(int const &n) {
+		data.resize(1);
+		sign = n < 0;
+		data[0] = abs(n);
+	}
+
+	big_integer(big_integer const &other) {
+		data = other.data;
+		sign = other.sign;
+	}
+
+	explicit big_integer(string const &s) {
+		if (s.empty()) {
+			data.resize(1, 0);
+			sign = false;
+		} else {
+			data.resize(1, 0);
+			if (s == "-0") {
+				sign = false;
+				return;
+			} 
+			sign = s[0] == '-';
+			for (size_t i = sign; i < s.length(); ++i) {
+				*this *= 10;
+				*this += (u_int)(s[i] - '0');
+			}
+			delete_zeroes();
+		}
+	}
+
+	~big_integer() {}
+
+	string to_string() const {
+		string res = "";
+		big_integer copy = *this;
+		while (copy != 0) {
+			u_int mod = copy /= 10;
+			res += (char)(mod + '0');
+		}
+		if (res.empty()) {
+			res = "0";
+		}
+		if (sign) {
+			res += '-';
+		}
+		reverse(res.begin(), res.end());
+		return res;
+	}
+
+	big_integer& operator= (big_integer const &other) {
+		sign = other.sign;
+		data.resize(other.data.size());
+		for (size_t i = 0; i < data.size(); ++i) {
+			data[i] = other.data[i];
+		}
+		return *this;
+	}
+
+	friend const bool operator== (big_integer const &a, big_integer const &b);
+
+	friend const bool operator!= (big_integer const &a, big_integer const &b);
+
+	friend const bool operator< (big_integer const &a, big_integer const &b);
+	
+	friend const bool operator<= (big_integer const &a, big_integer const &b);
+
+	friend const bool operator> (big_integer const &a, big_integer const &b);
+
+	friend const bool operator>= (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator+ (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator- (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator- (big_integer const &a);
+
+	void swap(big_integer &other) {
+		bool buff = sign;
+		sign = other.sign;
+		other.sign = buff;
+		data.swap(other.data);
+	}
+
+	friend const big_integer operator+ (big_integer const &a);
+
+	friend ostream& operator<< (ostream& os, big_integer const &number);
+
+	friend const big_integer operator* (big_integer const &a, big_integer const &b);
+
+	friend big_integer& operator+= (big_integer &a, big_integer const &b);
+
+	friend big_integer& operator-= (big_integer &a, big_integer const &b);
+
+	friend big_integer& operator*= (big_integer &a, big_integer const &b);
+
+	friend const big_integer& operator++ (big_integer &a);
+
+	friend const big_integer operator++ (big_integer &a, int);
+
+	friend const big_integer& operator-- (big_integer &a);
+
+	friend const big_integer operator-- (big_integer &a, int);
+
+	friend const big_integer operator& (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator| (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator^ (big_integer const &a, big_integer const &b);
+
+	friend big_integer& operator&= (big_integer &a, big_integer const &b);
+
+	friend big_integer& operator|= (big_integer &a, big_integer const &b);
+
+	friend big_integer& operator^= (big_integer &a, big_integer const &b);
+
+	friend const big_integer operator~ (big_integer const &a);
+
+	friend const big_integer operator<< (big_integer const &a, u_int const &shift);
+
+	friend const big_integer operator>> (big_integer const &a, u_int const &shift);
+
+	friend big_integer& operator>>= (big_integer &a, u_int const &shift);
+
+	friend big_integer& operator<<= (big_integer &a, u_int const &shift);
+
+	friend const big_integer operator/ (big_integer const &a, big_integer const &b);
+
+	friend const big_integer operator% (big_integer const &a, big_integer const  &b);
+
+	friend big_integer& operator/= (big_integer &a, big_integer const &b);
+
+	friend big_integer& operator%= (big_integer &a, big_integer const &b);
+};
 
 const bool operator== (big_integer const &a, big_integer const &b) {
 	if (a.sign != b.sign || a.data.size() != b.data.size()) {
@@ -427,7 +526,7 @@ const big_integer operator& (big_integer const &a, big_integer const &b) {
 	size_t n = max(first.size(), second.size());
 	vector<u_int> res(n);
 	for (size_t i = 0; i < n; ++i) {
-		u_int c = i < first.size() ? first[i] : 0;
+		u_int c =  i < first.size() ? first[i] : 0;
 		u_int d = i < second.size() ? second[i] : 0;
 		res[i] = c & d;
 	}
@@ -463,7 +562,7 @@ big_integer& operator&= (big_integer &a, big_integer const &b) {
 }
 
 big_integer& operator|= (big_integer &a, big_integer const &b) {
-	return a = a | b;
+return a = a | b;
 }
 
 big_integer& operator^= (big_integer &a, big_integer const &b) {
@@ -569,4 +668,24 @@ big_integer& operator/= (big_integer &a, big_integer const &b) {
 
 big_integer& operator%= (big_integer &a, big_integer const &b) {
 	return a = a % b;
+}
+
+//----------------------------------------------------------------------------------------
+char rnd() {
+	return (char)((rand() % 10) + '0');
+}
+
+int main() {
+	/*string s1 = "", s2 = "";	
+	for (size_t i = 0; i < 100000; ++i) {
+		s1 += rnd();
+		s2 += rnd();
+	}
+	big_integer a(s1), b(s2);
+	a & b;
+	cerr << clock() * 1. / CLOCKS_PER_SEC << "\n";*/
+	big_integer a("10"), b("2");
+	cout << a % b;
+
+	return 0;
 }
