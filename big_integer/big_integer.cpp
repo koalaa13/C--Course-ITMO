@@ -8,9 +8,9 @@ using namespace std;
 u_int const BIT = 32;
 u_ll const RADIX = (u_ll) 1 << BIT;
 
-void shift_array_left(vector <u_int> &arr, u_int const &shift) {
+void shift_array_left(vector<u_int> &arr, u_int const &shift) {
     u_int big = shift / BIT, small = shift % BIT;
-    vector <u_int> res(big + arr.size(), 0);
+    vector<u_int> res(big + arr.size(), 0);
     for (size_t i = big; i < res.size(); ++i) {
         res[i] = arr[i - big];
     }
@@ -31,13 +31,13 @@ void shift_array_left(vector <u_int> &arr, u_int const &shift) {
     arr.swap(res);
 }
 
-void shift_array_right(vector <u_int> &arr, u_int const &shift) {
+void shift_array_right(vector<u_int> &arr, u_int const &shift) {
     u_int big = shift / BIT, small = shift % BIT;
     if (big >= arr.size()) {
         arr.resize(1, 0);
         return;
     }
-    vector <u_int> res(arr.size() - big);
+    vector<u_int> res(arr.size() - big);
     for (size_t i = 0; i < res.size(); ++i) {
         res[i] = arr[i + big];
     }
@@ -61,14 +61,7 @@ void big_integer::delete_zeroes() {
     }
 }
 
-void big_integer::swap(big_integer &other) {
-    bool buff = sign;
-    sign = other.sign;
-    other.sign = buff;
-    data.swap(other.data);
-}
-
-vector<u_int > make_two_complement(vector<u_int> const &arr, bool const &s) {
+vector<u_int> make_two_complement(vector<u_int> const &arr, bool const &s) {
     vector<u_int> res = arr;
     res.push_back(0);
     if (s) {
@@ -87,14 +80,8 @@ vector<u_int > make_two_complement(vector<u_int> const &arr, bool const &s) {
     return res;
 }
 
-big_integer::big_integer(vector <u_int> const &d, bool const &s) {
-    data = d;
-    sign = s;
-    delete_zeroes();
-}
-
-big_integer::big_integer(vector <u_int> const &arr) {
-    vector <u_int> copy = arr;
+big_integer::big_integer(vector<u_int> const &arr) {
+    vector<u_int> copy = arr;
     if (copy.back() == 0) {
         copy.pop_back();
         sign = false;
@@ -331,31 +318,14 @@ const big_integer operator+(big_integer const &a, big_integer const &b) {
     return res;
 }
 
-const big_integer operator-(big_integer const &a, big_integer const &b) {
-    if (a.sign != b.sign) {
-        if (a.sign) {
-            return -(-a + b);
-        } else {
-            return a + -b;
-        }
-    }
+big_integer unsigned_sub_long(big_integer const &a, big_integer const &b) {
     big_integer res = a;
-    big_integer subt = b;
-    if (a.sign) {
-        res.swap(subt);
-        res.sign ^= true;
-        subt.sign ^= true;
-    }
-    bool swap_sign = false;
-    if (res < subt) {
-        swap_sign = true;
-        res.swap(subt);
-    }
+    res.sign = false;
     bool borrowed = false;
     for (size_t i = 0; i < res.data.size(); ++i) {
         ll first = (ll) res.data[i], second = 0ll;
-        if (subt.data.size() > i) {
-            second = (ll) subt.data[i];
+        if (b.data.size() > i) {
+            second = (ll) b.data[i];
         }
         first -= second + borrowed;
         if (first < 0) {
@@ -366,12 +336,26 @@ const big_integer operator-(big_integer const &a, big_integer const &b) {
         }
         res.data[i] = (u_int) first;
     }
-    res.sign ^= swap_sign;
-    if (res.eq_short(0)) {
-        res.sign = false;
-    }
     res.delete_zeroes();
     return res;
+}
+
+const big_integer operator-(big_integer const &a, big_integer const &b) {
+    if (a.sign != b.sign) {
+        if (a.sign) {
+            return -(-a + b);
+        } else {
+            return a + -b;
+        }
+    }
+    if (a.sign) {
+        return a + -b;
+    }
+    if (a < b) {
+        return -unsigned_sub_long(b, a);
+    } else {
+        return unsigned_sub_long(a, b);
+    }
 }
 
 const big_integer operator*(big_integer const &a, big_integer const &b) {
@@ -467,9 +451,9 @@ const big_integer operator--(big_integer &a, int) {
 }
 
 const big_integer operator&(big_integer const &a, big_integer const &b) {
-    vector <u_int> first = make_two_complement(a.data, a.sign), second = make_two_complement(b.data, b.sign);
+    vector<u_int> first = make_two_complement(a.data, a.sign), second = make_two_complement(b.data, b.sign);
     size_t n = max(first.size(), second.size());
-    vector <u_int> res(n);
+    vector<u_int> res(n);
     for (size_t i = 0; i < n; ++i) {
         u_int c = i < first.size() ? first[i] : 0;
         u_int d = i < second.size() ? second[i] : 0;
@@ -479,9 +463,9 @@ const big_integer operator&(big_integer const &a, big_integer const &b) {
 }
 
 const big_integer operator|(big_integer const &a, big_integer const &b) {
-    vector <u_int> first = make_two_complement(a.data, a.sign), second = make_two_complement(b.data, b.sign);
+    vector<u_int> first = make_two_complement(a.data, a.sign), second = make_two_complement(b.data, b.sign);
     size_t n = max(first.size(), second.size());
-    vector <u_int> res(n);
+    vector<u_int> res(n);
     for (size_t i = 0; i < n; ++i) {
         u_int c = i < first.size() ? first[i] : 0;
         u_int d = i < second.size() ? second[i] : 0;
@@ -491,9 +475,9 @@ const big_integer operator|(big_integer const &a, big_integer const &b) {
 }
 
 const big_integer operator^(big_integer const &a, big_integer const &b) {
-    vector <u_int> first = make_two_complement(a.data, a.sign), second = make_two_complement(b.data, b.sign);
+    vector<u_int> first = make_two_complement(a.data, a.sign), second = make_two_complement(b.data, b.sign);
     size_t n = max(first.size(), second.size());
-    vector <u_int> res(n);
+    vector<u_int> res(n);
     for (size_t i = 0; i < n; ++i) {
         u_int c = i < first.size() ? first[i] : 0;
         u_int d = i < second.size() ? second[i] : 0;
@@ -515,7 +499,7 @@ big_integer &operator^=(big_integer &a, big_integer const &b) {
 }
 
 const big_integer operator~(big_integer const &a) {
-    vector <u_int> res = make_two_complement(a.data, a.sign);
+    vector<u_int> res = make_two_complement(a.data, a.sign);
     for (u_int &re : res) {
         re = ~re;
     }
@@ -523,7 +507,7 @@ const big_integer operator~(big_integer const &a) {
 }
 
 const big_integer operator<<(big_integer const &a, u_int const &shift) {
-    vector <u_int> new_data;
+    vector<u_int> new_data;
     if (a.sign) {
         new_data = make_two_complement(a.data, a.sign);
     } else {
@@ -538,7 +522,7 @@ const big_integer operator<<(big_integer const &a, u_int const &shift) {
 }
 
 const big_integer operator>>(big_integer const &a, u_int const &shift) {
-    vector <u_int> new_data;
+    vector<u_int> new_data;
     if (a.sign) {
         new_data = make_two_complement(a.data, a.sign);
     } else {
