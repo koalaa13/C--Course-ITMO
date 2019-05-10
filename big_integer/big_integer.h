@@ -13,15 +13,13 @@ typedef unsigned int u_int;
 typedef long long ll;
 typedef unsigned long long u_ll;
 
-class big_integer {
+struct big_integer {
     vector<u_int> data;
     bool sign;
 
     void delete_zeroes();
-    vector<u_int> make_two_complement() const;
     big_integer(vector<u_int> const &d, bool const &s);
     big_integer(vector<u_int> const &arr);
-    u_ll make_long_from_int(u_int const &a, u_int const &b) const;
     bool eq_short (u_int const &b) const;
     bool not_eq_short (u_int const &b) const;
     big_integer mul_long_short (u_int const &b) const;
