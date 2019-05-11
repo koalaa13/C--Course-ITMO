@@ -6,7 +6,14 @@
 using namespace std;
 
 u_int const BIT = 32;
-u_ll const RADIX = (u_ll) 1 << BIT;
+u_ll const RADIX = static_cast<u_ll>(1) << BIT;
+
+void big_integer::normalize() {
+    delete_zeroes();
+    if (this->eq_short(0)) {
+        sign = false;
+    }
+}
 
 void shift_array_left(vector<u_int> &arr, u_int const &shift) {
     u_int big = shift / BIT, small = shift % BIT;
@@ -156,8 +163,8 @@ u_int big_integer::divide_eq_long_short(u_int const &b) {
     u_int prev = 0;
     for (ptrdiff_t i = data.size() - 1; i >= 0; --i) {
         u_ll cur = make_long_from_int(prev, data[i]);
-        prev = (u_int) (cur % (u_ll) b);
-        data[i] = (u_int) (cur / (u_ll) b);
+        prev = static_cast<u_int>(cur % static_cast<u_ll>(b));
+        data[i] = static_cast<u_int>(cur / static_cast<u_ll>(b));
     }
     delete_zeroes();
     return prev;
@@ -298,23 +305,20 @@ const big_integer operator+(big_integer const &a, big_integer const &b) {
     size_t a_size = a.data.size(), b_size = b.data.size();
     res.data.resize(max(a_size, b_size));
     for (size_t i = 0; i < max(a_size, b_size); ++i) {
-        u_ll cur = (u_ll) prev;
+        u_ll cur = static_cast<u_ll>(prev);
         if (i < a_size) {
-            cur += (u_ll) a.data[i];
+            cur += static_cast<u_ll>(a.data[i]);
         }
         if (i < b_size) {
-            cur += (u_ll) b.data[i];
+            cur += static_cast<u_ll>(b.data[i]);
         }
-        res.data[i] = (u_int) (cur % RADIX);
-        prev = (u_int) (cur / RADIX);
+        res.data[i] = static_cast<u_int>(cur % RADIX);
+        prev = static_cast<u_int>(cur / RADIX);
     }
     if (prev) {
-        res.data.push_back((u_int) prev);
+        res.data.push_back(static_cast<u_int>(prev));
     }
-    if (res.eq_short(0)) {
-        res.sign = false;
-    }
-    res.delete_zeroes();
+    res.normalize();
     return res;
 }
 
@@ -323,9 +327,9 @@ big_integer unsigned_sub_long(big_integer const &a, big_integer const &b) {
     res.sign = false;
     bool borrowed = false;
     for (size_t i = 0; i < res.data.size(); ++i) {
-        ll first = (ll) res.data[i], second = 0ll;
+        ll first = static_cast<ll>(res.data[i]), second = 0ll;
         if (b.data.size() > i) {
-            second = (ll) b.data[i];
+            second = static_cast<ll>(b.data[i]);
         }
         first -= second + borrowed;
         if (first < 0) {
@@ -334,7 +338,7 @@ big_integer unsigned_sub_long(big_integer const &a, big_integer const &b) {
         } else {
             borrowed = false;
         }
-        res.data[i] = (u_int) first;
+        res.data[i] = static_cast<u_int>(first);
     }
     res.delete_zeroes();
     return res;
@@ -365,9 +369,7 @@ const big_integer operator*(big_integer const &a, big_integer const &b) {
         res += a.mul_long_short(b.data[i]);
     }
     res.sign = a.sign ^ b.sign;
-    if (res.eq_short(0)) {
-        res.sign = false;
-    }
+    res.normalize();
     return res;
 }
 
@@ -391,7 +393,7 @@ const big_integer &operator++(big_integer &a) {
     } else {
         bool was = true;
         for (u_int &i : a.data) {
-            u_ll cur = (u_ll) i + (u_ll) was;
+            u_ll cur = static_cast<u_ll>(i) + static_cast<u_ll>(was);
             if (cur == RADIX) {
                 i = 0;
             } else {
@@ -404,10 +406,7 @@ const big_integer &operator++(big_integer &a) {
             a.data.push_back(1);
         }
     }
-    if (a.eq_short(0)) {
-        a.sign = false;
-    }
-    a.delete_zeroes();
+    a.normalize();
     return a;
 }
 
@@ -433,14 +432,11 @@ const big_integer &operator--(big_integer &a) {
             }
             a.data[i--]--;
             for (; i >= 0; --i) {
-                a.data[i] = (u_int) (RADIX - 1);
+                a.data[i] = static_cast<u_int>(RADIX - 1);
             }
         }
     }
-    if (a.eq_short(0)) {
-        a.sign = false;
-    }
-    a.delete_zeroes();
+    a.normalize();
     return a;
 }
 
@@ -596,10 +592,7 @@ const big_integer operator/(big_integer const &a, big_integer const &b) {
         res.data[j] = qj;
     }
     res.sign = a.sign ^ b.sign;
-    res.delete_zeroes();
-    if (res.eq_short(0)) {
-        res.sign = false;
-    }
+    res.normalize();
     return res;
 }
 
