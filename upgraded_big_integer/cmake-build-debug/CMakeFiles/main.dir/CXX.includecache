@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/koalaa13/CLionProjects/big_integer/main.cpp
+iostream
+-
+vector.h
+/home/koalaa13/CLionProjects/big_integer/vector.h
+
+/home/koalaa13/CLionProjects/big_integer/vector.h
+iostream
+-
+memory
+-
+thread
+-
+chrono
+-
+mutex
+-
+

@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/koalaa13/CLionProjects/big_integer/big_integer.h
+cstddef
+-
+gmp.h
+-
+iosfwd
+-
+iostream
+-
+my_vector.h
+/home/koalaa13/CLionProjects/big_integer/my_vector.h
+
+/home/koalaa13/CLionProjects/big_integer/main.cpp
+iostream
+-
+my_vector.h
+/home/koalaa13/CLionProjects/big_integer/my_vector.h
+big_integer.h
+/home/koalaa13/CLionProjects/big_integer/big_integer.h
+
+/home/koalaa13/CLionProjects/big_integer/my_vector.cpp
+my_vector.h
+/home/koalaa13/CLionProjects/big_integer/my_vector.h
+memory
+-
+cstring
+-
+
+/home/koalaa13/CLionProjects/big_integer/my_vector.h
+iostream
+-
+memory
+-
+cstdlib
+-
+cstring
+-
+

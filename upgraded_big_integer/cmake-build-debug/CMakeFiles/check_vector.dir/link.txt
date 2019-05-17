@@ -1,0 +1,1 @@
+/usr/bin/c++   -Wall -std=c++11 -pedantic -g -fsanitize=address,undefined -D_GLIBCXX_DEBUG   CMakeFiles/check_vector.dir/main.cpp.o CMakeFiles/check_vector.dir/my_vector.cpp.o  -o check_vector 

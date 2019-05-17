@@ -1,0 +1,1 @@
+/usr/bin/c++   -Wall -std=c++11 -pedantic -g -fsanitize=address,undefined -D_GLIBCXX_DEBUG   CMakeFiles/check_big_integer.dir/main.cpp.o CMakeFiles/check_big_integer.dir/my_vector.cpp.o CMakeFiles/check_big_integer.dir/big_integer.cpp.o  -o check_big_integer 
