@@ -34,12 +34,6 @@ class my_vector {
         ~any_data() {};
     } union_data;
 
-    struct deleter {
-        void operator()(u_int *p) {
-            operator delete[](p);
-        }
-    };
-
     bool is_big() const;
 
     void change_capacity(size_t const &new_cap);

@@ -23,7 +23,7 @@ bool my_vector::is_big() const {
 
 void my_vector::change_capacity(size_t const &new_cap) {
     if (is_big()) {
-        union_data.big_data.p.reset(copy_data(data, sz, new_cap), deleter());
+        union_data.big_data.p.reset(copy_data(data, sz, new_cap));
         union_data.big_data.capacity = new_cap;
         data = union_data.big_data.p.get();
     } else {
@@ -168,7 +168,7 @@ bool operator!=(my_vector const &a, my_vector const &b) {
 
 void my_vector::prep_for_change() {
     if (is_big() && !union_data.big_data.p.unique()) {
-        union_data.big_data.p.reset(copy_data(data, sz, sz), deleter());
+        union_data.big_data.p.reset(copy_data(data, sz, sz));
         union_data.big_data.capacity = sz;
         data = union_data.big_data.p.get();
     }
