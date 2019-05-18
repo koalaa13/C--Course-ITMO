@@ -99,9 +99,12 @@ void my_vector::pop_back() {
     if (is_big() && have_to_decrease(sz, get_capacity())) {
         size_t new_capacity = get_capacity() / 2;
         if (new_capacity <= SMALL_SIZE) {
-            memcpy(union_data.small_data, union_data.big_data.p.get(), sz * sizeof(u_int));
-            union_data.big_data.p.reset();
-            data = union_data.small_data;
+			u_int tmp[SMALL_SIZE];
+			memcpy(tmp, data, sz * sizeof(u_int));
+			union_data.big_data.~big();
+			memcpy(union_data.small_data, tmp, sz * sizeof(u_int));
+			memset(union_data.small_data + sz, 0, (SMALL_SIZE - sz) * sizeof(u_int));
+			data = union_data.small_data;
         } else {
             reserve(new_capacity);
         }
