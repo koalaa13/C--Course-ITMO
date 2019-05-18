@@ -1,3 +1,0 @@
-/home/koalaa13/Desktop/upgraded_big_integer/CMakeFiles/rebuild_cache.dir
-/home/koalaa13/Desktop/upgraded_big_integer/CMakeFiles/big_integer_testing.dir
-/home/koalaa13/Desktop/upgraded_big_integer/CMakeFiles/edit_cache.dir

@@ -1,5 +1,0 @@
-/home/koalaa13/CLionProjects/big_integer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/koalaa13/CLionProjects/big_integer/cmake-build-debug/CMakeFiles/big_integer_testing.dir
-/home/koalaa13/CLionProjects/big_integer/cmake-build-debug/CMakeFiles/check_vector.dir
-/home/koalaa13/CLionProjects/big_integer/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/koalaa13/CLionProjects/big_integer/cmake-build-debug/CMakeFiles/check_big_integer.dir
