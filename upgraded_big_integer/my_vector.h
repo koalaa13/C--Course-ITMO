@@ -44,7 +44,7 @@ class my_vector {
 
     static void swap_big_and_small(any_data &big, any_data &small);
 
-    void prep_for_change();
+    void divide();
 
     u_int *data;
 

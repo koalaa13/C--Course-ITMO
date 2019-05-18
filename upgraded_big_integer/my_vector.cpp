@@ -17,6 +17,10 @@ u_int *copy_data(const u_int *source, size_t const &count, size_t const &capacit
     return res;
 }
 
+bool have_to_decrease(size_t const &size_, size_t const &capacity_) {
+    return size_ * 4 < capacity_;
+}
+
 bool my_vector::is_big() const {
     return data != union_data.small_data;
 }
@@ -83,7 +87,7 @@ void my_vector::push_back(const u_int &val) {
     if (get_capacity() == sz) {
         reserve(get_new_capacity(sz));
     }
-    prep_for_change();
+    divide();
     data[sz++] = val;
 }
 
@@ -92,12 +96,24 @@ size_t my_vector::get_capacity() const {
 }
 
 void my_vector::pop_back() {
-    prep_for_change();
+    if (is_big() && have_to_decrease(sz, get_capacity())) {
+        size_t new_capacity = get_capacity() / 2;
+        if (new_capacity <= SMALL_SIZE) {
+            memcpy(union_data.small_data, union_data.big_data.p.get(), sz * sizeof(u_int));
+            union_data.big_data.p.reset();
+            data = union_data.small_data;
+        } else {
+            reserve(new_capacity);
+        }
+    }
+    if (is_big()) {
+        divide();
+    }
     --sz;
 }
 
 u_int &my_vector::operator[](size_t const &ind) {
-    prep_for_change();
+    divide();
     return data[ind];
 }
 
@@ -166,7 +182,7 @@ bool operator!=(my_vector const &a, my_vector const &b) {
     return !(a == b);
 }
 
-void my_vector::prep_for_change() {
+void my_vector::divide() {
     if (is_big() && !union_data.big_data.p.unique()) {
         union_data.big_data.p.reset(copy_data(data, sz, sz));
         union_data.big_data.capacity = sz;
