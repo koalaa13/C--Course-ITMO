@@ -87,9 +87,7 @@ void my_vector::push_back(const u_int &val) {
     if (get_capacity() == sz) {
         reserve(get_new_capacity(sz));
     }
-    if (is_big()) {
-        divide();
-    }
+    divide();
     data[sz++] = val;
 }
 
@@ -108,16 +106,12 @@ void my_vector::pop_back() {
             reserve(new_capacity);
         }
     }
-    if (is_big()) {
-        divide();
-    }
+    divide();
     --sz;
 }
 
 u_int &my_vector::operator[](size_t const &ind) {
-    if (is_big()) {
-        divide();
-    }
+    divide();
     return data[ind];
 }
 
