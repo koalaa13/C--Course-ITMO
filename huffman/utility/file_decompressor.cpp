@@ -7,6 +7,7 @@
 #include "file_reader.h"
 #include "../library/counter.h"
 #include "../library/huffman_tree.h"
+#include "../library/decryptor.h"
 #include <vector>
 #include <cstddef>
 
@@ -18,26 +19,12 @@ void decompress(std::string const &src, std::string const &dst) {
     for (size_t i = 0; i < MAX_SYMBOL; ++i) {
         cnts.add_data(i, reader.get_u_ll());
     }
-    huffman_tree my_tree(cnts);
+    decryptor decoder(cnts);
     while (!reader.eof()) {
         symbol c = reader.get();
-        if (memory_size >= 8) {
-            memory_size -= 8;
-            for (ptrdiff_t i = 7; i >= 0; --i) {
-                bool to_go = c & (1 << i);
-                u_int16_t res = my_tree.jump(to_go);
-                if (res < MAX_SYMBOL) {
-                    writer.put(static_cast<symbol>(res));
-                }
-            }
-        } else {
-            for (size_t i = 0, bit_id = 7; i < memory_size; ++i, --bit_id) {
-                bool to_go = c & (1 << bit_id);
-                u_int16_t res = my_tree.jump(to_go);
-                if (res < MAX_SYMBOL) {
-                    writer.put(static_cast<symbol>(res));
-                }
-            }
+        std::vector<symbol> to_print = decoder.decrypt(c, memory_size);
+        for (symbol ss : to_print) {
+            writer.put(ss);
         }
     }
 }

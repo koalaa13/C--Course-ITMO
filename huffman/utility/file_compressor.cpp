@@ -4,6 +4,7 @@
 
 #include "file_compressor.h"
 #include "file_writer.h"
+#include "../library/encryptor.h"
 
 counter get_count(std::string const &filename) {
     counter res;
@@ -22,10 +23,10 @@ counter get_count(std::string const &filename) {
 
 void compress(std::string const &src, std::string const &dst) {
     counter cnts = get_count(src);
-    huffman_tree my_tree(cnts);
+    encryptor coder(cnts);
     u_ll memory_size = 0;
     for (size_t i = 0; i < MAX_SYMBOL; ++i) {
-        memory_size += my_tree.get_code(i).length() * cnts.get(i);
+        memory_size += coder.get_code(i).length() * cnts.get(i);
     }
     file_writer writer(dst);
     file_reader reader(src);
@@ -36,20 +37,11 @@ void compress(std::string const &src, std::string const &dst) {
     code to_put;
     while (!reader.eof()) {
         symbol c = reader.get();
-        code c_code = my_tree.get_code(c);
-        size_t len = c_code.length();
-        for (size_t i = 0; i < len; ++i) {
-            to_put.push_back(c_code.get(i));
-            if (to_put.length() == 8) {
-                writer.put(to_put.get_data());
-                to_put.clear();
-            }
+        u_int res = coder.encrypt(c, to_put);
+        if (res < MAX_SYMBOL) {
+            writer.put(static_cast<symbol>(res));
         }
     }
-    if (to_put.length() > 0) {
-        while(to_put.length() < 8) {
-            to_put.push_back(false);
-        }
-    }
+    coder.add_end(to_put);
     writer.put(to_put.get_data());
 }
