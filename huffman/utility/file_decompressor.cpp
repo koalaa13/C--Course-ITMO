@@ -8,6 +8,7 @@
 #include "../library/counter.h"
 #include "../library/huffman_tree.h"
 #include <vector>
+#include <cstddef>
 
 void decompress(std::string const &src, std::string const &dst) {
     file_writer writer(dst);

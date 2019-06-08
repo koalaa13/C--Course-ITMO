@@ -3,6 +3,7 @@
 //
 
 #include "file_writer.h"
+#include <cstddef>
 
 file_writer::file_writer(const std::string &filename) : writer(filename, std::ofstream::binary), cur(0) {}
 
