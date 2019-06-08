@@ -5,7 +5,7 @@
 #ifndef HUFFMAN_MY_CONSTS_H
 #define HUFFMAN_MY_CONSTS_H
 
-#include <glob.h>
+#include <stdlib.h>
 
 typedef unsigned char symbol;
 typedef unsigned long long u_ll;
