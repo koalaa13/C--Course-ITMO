@@ -276,7 +276,7 @@ public:
         change_cap(size());
     }
 
-    void push_back(T const &elem) {
+    void push_back(T const elem) {
         divide();
         if (!small && big_data == nullptr) {
             small = true;
@@ -288,9 +288,11 @@ public:
             }
         } else {
             size_t cur_size = size();
+            // std::cerr << elem << '\n';
             if (small || capacity() == cur_size) {
                 reserve(2 * cur_size);
             }
+            // std::cerr << elem << '\n';
             new(reinterpret_cast<T *>(big_data + 3) + cur_size) T(elem);
             sz()++;
         }
@@ -365,7 +367,7 @@ public:
         return const_reverse_iterator(begin());
     }
 
-    T *data() {
+    T const *data() const noexcept {
         return begin();
     }
 
@@ -507,15 +509,12 @@ bool operator==(const my_vector<U> &a, const my_vector<U> &b) noexcept {
 
 template<typename U>
 bool operator<(const my_vector<U> &a, const my_vector<U> &b) noexcept {
-    if (a.size() != b.size()) {
-        return a.size() < b.size();
-    }
     for (size_t i = 0; i < a.size(); ++i) {
         if (a[i] != b[i]) {
             return a[i] < b[i];
         }
     }
-    return false;
+    return a.size() < b.size();
 }
 
 template<typename U>
