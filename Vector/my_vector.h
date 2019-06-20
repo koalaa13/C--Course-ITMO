@@ -426,6 +426,70 @@ public:
         }
         return begin() + ind;
     }
+
+    iterator erase(const_iterator pos) {
+        divide();
+        size_t ind = 0;
+        const_iterator cur_pos = begin();
+        while (cur_pos != pos) {
+            cur_pos++;
+            ind++;
+        }
+        size_t cur_size = size();
+        size_t *new_data = reinterpret_cast<size_t *>(operator new[](3 * sizeof(size_t) + (cur_size - 1) * sizeof(T)));
+        *new_data = cur_size - 1;
+        *(new_data + 1) = cur_size - 1;
+        *(new_data + 2) = 1;
+        size_t i = 0;
+        try {
+            for (; i < ind; ++i) {
+                new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
+            }
+            for (i = ind + 1; i < cur_size; ++i) {
+                new(reinterpret_cast<T *>(new_data + 3) + i - 1) T((*this)[i]);
+            }
+            clear_data();
+            big_data = new_data;
+        } catch (...) {
+            delete_if_exception(new_data, i);
+            operator delete[](new_data);
+            throw;
+        }
+        return begin() + ind;
+    }
+
+    iterator erase(const_iterator first, const_iterator second) {
+        divide();
+        size_t len = second - first;
+        size_t beg = 0;
+        const_iterator cur_pos = begin();
+        while (cur_pos != first) {
+            cur_pos++;
+            beg++;
+        }
+        size_t cur_size = size();
+        size_t *new_data = reinterpret_cast<size_t *>(operator new[](
+                3 * sizeof(size_t) + (cur_size - len) * sizeof(T)));
+        *new_data = cur_size - len;
+        *(new_data + 1) = cur_size - len;
+        *(new_data + 2) = 1;
+        size_t i = 0;
+        try {
+            for (; i < beg; ++i) {
+                new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
+            }
+            for (i = beg + len; i < cur_size; ++i) {
+                new(reinterpret_cast<T *>(new_data + 3) + i - len) T((*this)[i]);
+            }
+            clear_data();
+            big_data = new_data;
+        } catch (...) {
+            delete_if_exception(new_data, i);
+            operator delete[](new_data);
+            throw;
+        }
+        return begin() + beg;
+    }
 };
 
 template<typename U>
