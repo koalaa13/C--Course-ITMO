@@ -366,9 +366,6 @@ public:
     template<typename U>
     friend void swap(my_vector<U> &a, my_vector<U> &b);
 
-    template<typename U>
-    friend std::ostream &operator<<(std::ostream &os, my_vector<U> const &array) noexcept;
-
     iterator insert(const_iterator pos, T const &elem) {
         divide();
         size_t ind = 0, i = 0;
@@ -516,7 +513,7 @@ void swap(my_vector<U> &a, my_vector<U> &b) {
         } else {
             my_vector copy(b);
             try {
-                new (&b.small_data) U(a.small_data);
+                new(&b.small_data) U(a.small_data);
             } catch (...) {
                 b.big_data = copy.big_data;
                 throw;
@@ -530,7 +527,7 @@ void swap(my_vector<U> &a, my_vector<U> &b) {
         if (b.small) {
             my_vector copy(a);
             try {
-                new (&a.small_data) U(b.small_data);
+                new(&a.small_data) U(b.small_data);
             } catch (...) {
                 a.big_data = copy.big_data;
                 throw;
@@ -543,14 +540,6 @@ void swap(my_vector<U> &a, my_vector<U> &b) {
             std::swap(a.big_data, b.big_data);
         }
     }
-}
-
-template<typename U>
-std::ostream &operator<<(std::ostream &os, const my_vector<U> &array) noexcept {
-    for (auto i : array) {
-        os << i << ' ';
-    }
-    return os;
 }
 
 #endif //EXAM_MY_VECTOR_H
