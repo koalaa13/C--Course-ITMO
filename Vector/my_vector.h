@@ -10,7 +10,7 @@
 #include <memory>
 
 template<typename T>
-class my_vector {
+struct my_vector {
     union {
         size_t *big_data;
         T small_data;
@@ -45,23 +45,23 @@ class my_vector {
                 clear_data();
             } else {
                 T new_small_data(front());
+                my_vector copy(*this);
                 clear_data();
-                small = true;
                 try {
                     new(&small_data) T(new_small_data);
+                    small = true;
                 } catch (...) {
-                    make_default();
+                    *this = copy;
                     throw;
                 }
             }
-        } else {
+        } else { // make_big
             size_t *new_data = reinterpret_cast<size_t *>(operator new[](3 * sizeof(size_t) + new_cap * sizeof(T)));
             size_t new_size = new_cap < cur_size ? new_cap : cur_size, i = 0;
+            *new_data = new_size;
+            *(new_data + 1) = new_cap;
+            *(new_data + 2) = 1;
             try {
-                divide();
-                *new_data = new_size;
-                *(new_data + 1) = new_cap;
-                *(new_data + 2) = 1;
                 if (small) {
                     new(reinterpret_cast<T *>(new_data + 3)) T(small_data);
                 } else {
@@ -74,13 +74,13 @@ class my_vector {
                 big_data = new_data;
             } catch (...) {
                 delete_if_exception(new_data, i);
-                operator delete[](big_data);
+                operator delete[](new_data);
                 throw;
             }
         }
     }
 
-    void clear_data() {
+    void clear_data() noexcept {
         if (small) {
             small_data.~T();
         } else {
@@ -120,17 +120,6 @@ class my_vector {
         }
     }
 
-    template<typename U>
-    void swap_big_and_small(my_vector<U> &b) {
-        U tmp(small_data);
-        small = false;
-        big_data = b.big_data;
-        small_data.~U();
-        b.big_data = nullptr;
-        b.small = true;
-        new(&b.small_data) U(tmp);
-    }
-
     void delete_if_exception(size_t *p, size_t end) {
         for (size_t j = 0; j < end; ++j) {
             (*(reinterpret_cast<T *>(p + 3) + j)).~T();
@@ -162,25 +151,8 @@ public:
         }
     }
 
-    ~my_vector() {
+    ~my_vector() noexcept {
         clear_data();
-    }
-
-    my_vector(size_t new_size, T const &elem) : big_data(nullptr), small(false) {
-        if (new_size == 1) {
-            small = true;
-            try {
-                new(&small_data) T(elem);
-            } catch (...) {
-                make_default();
-                throw;
-            }
-        } else {
-            change_cap(new_size);
-            for (size_t i = 0; i < new_size; ++i) {
-                push_back(elem);
-            }
-        }
     }
 
     template<typename InputIterator>
@@ -201,6 +173,9 @@ public:
     }
 
     my_vector &operator=(my_vector const &other) {
+        if (&(*this) == &other) {
+            return *this;
+        }
         clear_data();
         small = other.small;
         if (small) {
@@ -259,7 +234,7 @@ public:
     }
 
     void reserve(size_t new_cap) {
-        if (new_cap <= 1 || (is_big() && cap() >= new_cap)) {
+        if (new_cap <= 1 || capacity() >= new_cap) {
             return;
         }
         change_cap(new_cap);
@@ -288,11 +263,9 @@ public:
             }
         } else {
             size_t cur_size = size();
-            // std::cerr << elem << '\n';
             if (small || capacity() == cur_size) {
                 reserve(2 * cur_size);
             }
-            // std::cerr << elem << '\n';
             new(reinterpret_cast<T *>(big_data + 3) + cur_size) T(elem);
             sz()++;
         }
@@ -306,7 +279,7 @@ public:
         }
     }
 
-    void clear() noexcept {
+    void clear() {
         clear_data();
     }
 
@@ -384,10 +357,8 @@ public:
     template<typename U>
     friend bool operator<=(my_vector<U> const &a, my_vector<U> const &b) noexcept;
 
-
     template<typename U>
     friend bool operator>(my_vector<U> const &a, my_vector<U> const &b) noexcept;
-
 
     template<typename U>
     friend bool operator>=(my_vector<U> const &a, my_vector<U> const &b) noexcept;
@@ -442,18 +413,18 @@ public:
         *new_data = cur_size - 1;
         *(new_data + 1) = cur_size - 1;
         *(new_data + 2) = 1;
-        size_t i = 0;
+        size_t i = 0, cnt_created = 0;
         try {
-            for (; i < ind; ++i) {
+            for (; i < ind; ++i, ++cnt_created) {
                 new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
             }
-            for (i = ind + 1; i < cur_size; ++i) {
+            for (i = ind + 1; i < cur_size; ++i, ++cnt_created) {
                 new(reinterpret_cast<T *>(new_data + 3) + i - 1) T((*this)[i]);
             }
             clear_data();
             big_data = new_data;
         } catch (...) {
-            delete_if_exception(new_data, i);
+            delete_if_exception(new_data, cnt_created);
             operator delete[](new_data);
             throw;
         }
@@ -475,18 +446,18 @@ public:
         *new_data = cur_size - len;
         *(new_data + 1) = cur_size - len;
         *(new_data + 2) = 1;
-        size_t i = 0;
+        size_t i = 0, cnt_created = 0;
         try {
-            for (; i < beg; ++i) {
+            for (; i < beg; ++i, ++cnt_created) {
                 new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
             }
-            for (i = beg + len; i < cur_size; ++i) {
+            for (i = beg + len; i < cur_size; ++i, ++cnt_created) {
                 new(reinterpret_cast<T *>(new_data + 3) + i - len) T((*this)[i]);
             }
             clear_data();
             big_data = new_data;
         } catch (...) {
-            delete_if_exception(new_data, i);
+            delete_if_exception(new_data, cnt_created);
             operator delete[](new_data);
             throw;
         }
@@ -543,16 +514,35 @@ void swap(my_vector<U> &a, my_vector<U> &b) {
         if (b.small) {
             std::swap(a.small_data, b.small_data);
         } else {
-            a.swap_big_and_small(b);
+            my_vector copy(b);
+            try {
+                new (&b.small_data) U(a.small_data);
+            } catch (...) {
+                b.big_data = copy.big_data;
+                throw;
+            }
+            b.small = true;
+            a.small_data.~U();
+            a.big_data = copy.big_data;
+            a.small = false;
         }
     } else {
         if (b.small) {
-            b.swap_big_and_small(a);
+            my_vector copy(a);
+            try {
+                new (&a.small_data) U(b.small_data);
+            } catch (...) {
+                a.big_data = copy.big_data;
+                throw;
+            }
+            a.small = true;
+            b.small_data.~U();
+            b.big_data = copy.big_data;
+            b.small = false;
         } else {
             std::swap(a.big_data, b.big_data);
         }
     }
-
 }
 
 template<typename U>
