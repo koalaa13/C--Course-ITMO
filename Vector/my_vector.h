@@ -10,7 +10,7 @@
 #include <memory>
 
 template<typename T>
-struct my_vector {
+class my_vector {
     union {
         size_t *big_data;
         T small_data;
@@ -65,9 +65,8 @@ struct my_vector {
                 if (small) {
                     new(reinterpret_cast<T *>(new_data + 3)) T(small_data);
                 } else {
-                    T *p = reinterpret_cast<T *>(new_data + 3);
-                    for (; i < new_size; ++i, ++p) {
-                        new(p) T((*this)[i]);
+                    for (; i < new_size; ++i) {
+                        new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
                     }
                 }
                 clear_data();
@@ -157,6 +156,7 @@ public:
 
     template<typename InputIterator>
     my_vector(InputIterator first, InputIterator second) : big_data(nullptr), small(false) {
+        change_cap(second - first);
         while (first != second) {
             push_back(*first);
             first++;
@@ -264,7 +264,7 @@ public:
         } else {
             size_t cur_size = size();
             if (small || capacity() == cur_size) {
-                reserve(2 * cur_size);
+                change_cap(2 * cur_size);
             }
             new(reinterpret_cast<T *>(big_data + 3) + cur_size) T(elem);
             sz()++;
@@ -272,11 +272,17 @@ public:
     }
 
     void resize(size_t new_size, T const &elem) {
-        clear_data();
-        change_cap(new_size);
-        for (size_t i = 0; i < new_size; ++i) {
-            push_back(elem);
+        my_vector<T> copy(*this);
+        if (new_size < copy.size()) {
+            while (new_size != copy.size()) {
+                copy.pop_back();
+            }
+        } else {
+            while (new_size != copy.size()) {
+                copy.push_back(elem);
+            }
         }
+        swap(*this, copy);
     }
 
     void clear() {
@@ -368,96 +374,35 @@ public:
 
     iterator insert(const_iterator pos, T const &elem) {
         divide();
-        size_t ind = 0, i = 0;
-        const_iterator cur_pos = begin();
-        while (cur_pos != pos) {
-            cur_pos++;
-            ind++;
-        }
-        size_t cur_size = size();
-        size_t *new_data = reinterpret_cast<size_t *>(operator new[](3 * sizeof(size_t) + (cur_size + 1) * sizeof(T)));
-        *new_data = cur_size + 1;
-        *(new_data + 1) = cur_size + 1;
-        *(new_data + 2) = 1;
-        try {
-            for (; i < ind; ++i) {
-                new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
-            }
-            new(reinterpret_cast<T *>(new_data + 3) + ind) T(elem);
-            for (i = ind + 1; i <= cur_size; ++i) {
-                new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i - 1]);
-            }
-            clear_data();
-            big_data = new_data;
-        } catch (...) {
-            delete_if_exception(new_data, i);
-            operator delete[](new_data);
-            throw;
+        size_t ind = pos - begin();
+        push_back(elem);
+        for (size_t i = size() - 1; i > ind; --i) {
+            std::swap((*this)[i], (*this)[i - 1]);
         }
         return begin() + ind;
     }
 
     iterator erase(const_iterator pos) {
         divide();
-        size_t ind = 0;
-        const_iterator cur_pos = begin();
-        while (cur_pos != pos) {
-            cur_pos++;
-            ind++;
+        size_t ind = pos - begin();
+        for (size_t i = ind; i < size() - 1; ++i) {
+            std::swap((*this)[i], (*this)[i + 1]);
         }
-        size_t cur_size = size();
-        size_t *new_data = reinterpret_cast<size_t *>(operator new[](3 * sizeof(size_t) + (cur_size - 1) * sizeof(T)));
-        *new_data = cur_size - 1;
-        *(new_data + 1) = cur_size - 1;
-        *(new_data + 2) = 1;
-        size_t i = 0, cnt_created = 0;
-        try {
-            for (; i < ind; ++i, ++cnt_created) {
-                new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
-            }
-            for (i = ind + 1; i < cur_size; ++i, ++cnt_created) {
-                new(reinterpret_cast<T *>(new_data + 3) + i - 1) T((*this)[i]);
-            }
-            clear_data();
-            big_data = new_data;
-        } catch (...) {
-            delete_if_exception(new_data, cnt_created);
-            operator delete[](new_data);
-            throw;
-        }
+        pop_back();
         return begin() + ind;
     }
 
     iterator erase(const_iterator first, const_iterator second) {
         divide();
+        size_t beg = first - begin();
         size_t len = second - first;
-        size_t beg = 0;
-        const_iterator cur_pos = begin();
-        while (cur_pos != first) {
-            cur_pos++;
-            beg++;
+        for (size_t i = beg; i + len < size(); ++i) {
+            std::swap((*this)[i], (*this)[i + len]);
         }
-        size_t cur_size = size();
-        size_t *new_data = reinterpret_cast<size_t *>(operator new[](
-                3 * sizeof(size_t) + (cur_size - len) * sizeof(T)));
-        *new_data = cur_size - len;
-        *(new_data + 1) = cur_size - len;
-        *(new_data + 2) = 1;
-        size_t i = 0, cnt_created = 0;
-        try {
-            for (; i < beg; ++i, ++cnt_created) {
-                new(reinterpret_cast<T *>(new_data + 3) + i) T((*this)[i]);
-            }
-            for (i = beg + len; i < cur_size; ++i, ++cnt_created) {
-                new(reinterpret_cast<T *>(new_data + 3) + i - len) T((*this)[i]);
-            }
-            clear_data();
-            big_data = new_data;
-        } catch (...) {
-            delete_if_exception(new_data, cnt_created);
-            operator delete[](new_data);
-            throw;
+        for (size_t i = 0; i < len; ++i) {
+            pop_back();
         }
+
         return begin() + beg;
     }
 };
