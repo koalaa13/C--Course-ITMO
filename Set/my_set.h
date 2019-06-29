@@ -131,6 +131,23 @@ class my_set {
         }
     };
 
+    my_iterator<T const> rec_upper_bound(T const &value, node_base *p) const {
+        if (p == nullptr) {
+            return end();
+        }
+
+        if (static_cast<node *>(p)->value <= value) {
+            return rec_upper_bound(value, p->right);
+        } else {
+            my_iterator<T const> res = rec_upper_bound(value, p->left);
+            if (res == end()) {
+                return my_iterator<T const>(p);
+            } else {
+                return res;
+            }
+        }
+    }
+
 public:
 
     typedef T value_type;
@@ -250,21 +267,21 @@ public:
     friend void swap(my_set<U> &a, my_set<U> &b);
 
     const_iterator lower_bound(T const &elem) const noexcept {
-        const_iterator it = begin();
-        for (; it != end() && *it < elem; ++it) {}
-        return it;
+        const_iterator it = find(elem);
+        if (it != end()) {
+            return it;
+        }
+        return upper_bound(elem);
     }
 
     const_iterator upper_bound(T const &elem) const noexcept {
-        const_iterator it = begin();
-        for (; it != end() && *it <= elem; ++it) {}
-        return it;
+        return rec_upper_bound(elem, fake.left);
     }
 
     iterator erase(const_iterator pos) noexcept {
         // std::cerr << "erase " << *pos << '\n';
         node_base *cur = pos.data;
-        iterator res = upper_bound(*pos);
+        pos++;
         if (cur->left == nullptr && cur->right == nullptr) {
             if (cur->is_left()) {
                 cur->par->left = nullptr;
@@ -328,7 +345,7 @@ public:
                 }
             }
         }
-        return res;
+        return pos;
     }
 
     void clear() noexcept {
