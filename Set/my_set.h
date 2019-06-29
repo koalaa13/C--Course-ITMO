@@ -266,7 +266,7 @@ public:
     template<typename U>
     friend void swap(my_set<U> &a, my_set<U> &b);
 
-    const_iterator lower_bound(T const &elem) const noexcept {
+    const_iterator lower_bound(T const &elem) const {
         const_iterator it = find(elem);
         if (it != end()) {
             return it;
@@ -274,7 +274,7 @@ public:
         return upper_bound(elem);
     }
 
-    const_iterator upper_bound(T const &elem) const noexcept {
+    const_iterator upper_bound(T const &elem) const {
         return rec_upper_bound(elem, fake.left);
     }
 
