@@ -206,7 +206,7 @@ public:
         return const_reverse_iterator(begin());
     }
 
-    const_iterator find(T const &elem) const noexcept {
+    const_iterator find(T const &elem) const {
         node_base *cur = fake.left;
         while (cur != nullptr) {
             if (static_cast<node *>(cur)->value == elem) {
